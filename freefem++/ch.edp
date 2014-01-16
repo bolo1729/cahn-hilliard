@@ -1,0 +1,99 @@
+// $Id: ch.edp,v 1.7 2006/03/17 13:10:05 bolo Exp $
+
+
+// modify these params if necessary (sizes of balls and tube)
+real scale = 0.5;
+real r1 = 4*scale;
+real r2 = 7*scale;
+real w = 10*scale;
+real h = 0.5*scale;  // remember to keep h < r1 and h < r2
+
+// modify these if necessary (number of elements in the mesh)
+int r1elems = 120;
+int r2elems = 210;
+int telems = 60;
+
+// modify these if necessary: simulation time and output freq.
+real dt = 0.001, T = 2000;
+real eps = 0.001;
+real outdt = 0.01;
+
+
+// this parameter controls the stability, see:
+// B.P. Vollmayr-Lee and A.D. Rutenberg, Fast and accurate coarsening simulation
+// with an unconditionally stable time step, Phys. Rev. E, 68 (2003), p. 066703
+real a = 3.0;
+
+
+// no need to modify anything below this line
+
+
+// position of balls
+real o1x = 0;
+real o2x = r1 + w + r2;
+real oy = 0;
+
+// intersections of balls and tubes
+real t1p = asin(h/r1);
+real t1x = o1x + r1*cos(t1p);
+real t2p = asin(h/r2);
+real t2x = o2x + r2*cos(pi+t2p);
+
+int CX = 1729;
+border C1(t=t1p,2*pi-t1p){x=o1x + r1*cos(t); y=oy + r1*sin(t); label=CX;}
+border C2(t=pi+t2p,3*pi-t2p){x=o2x + r2*cos(t); y=oy + r2*sin(t); label=CX;}
+border C3(t=0,1){x = t2x*(1-t) + t1x*t; y = oy+h; label=CX;}
+border C4(t=0,1){x = t1x*(1-t) + t2x*t; y = oy-h; label=CX;}
+
+
+// building mesh
+mesh Th = buildmesh(C1(r1elems) + C2(r2elems) + C3(telems) + C4(telems));
+
+plot(Th, wait=1);
+
+
+// func u0 = 0.5 + 0.1*sin(x^2+y^2);
+func u0 = 0.1*randreal1();
+
+// functions
+fespace Vh(Th, P1);
+Vh u=u0, uold, v, phi, psi;
+
+// define problem (time dependant: u = current value, uold = value from prev. step)
+problem CH([u,v], [phi,psi]) = int2d(Th)(u*phi/dt
+	+ dx(v)*dx(phi) + dy(v)*dy(phi)
+	+ eps*dx(u)*dx(psi) + eps*dy(u)*dy(psi)
+	- (1-a)*u*psi
+	- v*psi)
+	+ int2d(Th)((uold*uold*uold - a*uold)*psi - uold*phi/dt);
+
+// isovalues
+int niso = 12;
+real[int] viso(niso+1);
+for(int i = 0; i <= niso; i++)
+	viso[i] = -1.2 + 2.4 * i / niso;
+viso[0] = -10000.0;
+viso[niso] = 10000.0;
+viso[1] = -1.0;
+viso[niso-1] = 1.0;
+
+// colormap
+real[int] hsv = [ 0.0, 1.0, 1.0, 0.3, 1.0, 1.0 ];
+
+// solve for T/dt timesteps
+real nextout = 0;
+int outcount = 0;
+for (int tt = 0; tt < int(T/dt); tt++) {
+	real t = tt*dt;
+	uold = u;
+	CH;
+	real mass = int2d(Th)(u)/int2d(Th)(0*u+1);
+	if (t >= nextout) {
+		plot(u, viso=viso(0:niso), hsv=hsv, fill=true, value=true, nbiso=15, cmm="[eps="+eps+"; dt="+dt+"]  step="+t+"; mass="+mass, ps="ch-"+outcount+".ps");
+		nextout = nextout + outdt;
+		outcount = outcount + 1;
+	}
+	plot(u, viso=viso(0:niso), hsv=hsv, fill=true, value=true, nbiso=15, cmm="[eps="+eps+"; dt="+dt+"]  step="+t+"; mass="+mass);
+	cout << "time = " << t << "   mass = " << mass << endl;
+}
+

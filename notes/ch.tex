@@ -1,0 +1,639 @@
+% $Id: ch.tex,v 1.18 2006/04/03 21:13:28 bolo Exp $
+
+\documentclass[a4paper,11pt]{article}
+\usepackage[latin2]{inputenc}
+\usepackage{a4wide}
+%\usepackage[OT4]{polski}
+%\usepackage[polish]{babel}
+\usepackage[english]{babel}
+\usepackage{amsfonts}
+\usepackage{mathrsfs}
+\usepackage{alltt}
+%\usepackage{sans}
+
+\bibliographystyle{siam}
+
+
+\title{Notes on the Cahn-Hilliard equation}
+\date{}
+\author{£ukasz Bolikowski (bolo@icm.edu.pl)}
+
+\begin{document}
+
+%\thispagestyle{empty}
+\maketitle
+
+\begin{alltt}
+{\scriptsize Version: $Id: ch.tex,v 1.18 2006/04/03 21:13:28 bolo Exp $}
+\end{alltt}
+
+\section{Goal}
+The main goal of my research is to investigate the influence
+of geometry and topology of the domain $\Omega$
+on the solutions of the Cahn-Hilliard equation.
+
+\section{The equation}
+
+The Cahn-Hilliard equation:
+%
+\begin{equation}\label{eq:ch} \left\{ \begin{array}{ll}
+u_t = \Delta(-\varepsilon^2 \Delta u + u^3 - u),
+  & u : \Omega \times [0, \infty) \to \mathbb{R},\ \varepsilon > 0 \\
+\frac{\partial u}{\partial n} = \frac{\partial \Delta u}{\partial n} = 0,
+  & x \in \partial\Omega \\
+u(x,0) = u_0(x),
+  & x \in \Omega
+\end{array} \right. \end{equation}
+%
+models phase separation of a binary mixture.
+Some basic analytic properties of the solutions follow.
+
+\subsection{Mass conservation}
+
+Solutions of the equation conserve mass in the sense that:
+\begin{eqnarray}{d\over dt}\int_\Omega u & = &
+\int_\Omega u_t = \int_\Omega \Delta(-\varepsilon^2 \Delta u + u^3 - u)
+=  \int_{\partial\Omega}\nabla\Big(-\varepsilon^2 \Delta u + u^3 - u\Big)\cdot\vec{n} \nonumber \\
+& = & -\varepsilon^2 \int_{\partial\Omega} {\partial \Delta u \over \partial\vec{n}}
++ \int_{\partial\Omega} 3u^2{\partial u \over \partial\vec{n}}
+- \int_{\partial\Omega} {\partial u \over \partial\vec{n}} = 0 \label{eq:mass}
+\end{eqnarray}
+
+\subsection{Steady states in $\Omega = \mathbb{R}$}
+\label{sec:stationary}
+For $\Omega = \mathbb{R}$,
+function $f(x):= \tanh {x-x_0\over\varepsilon\sqrt{2}}$
+is a steady state solution for the C-H equation.
+Indeed: $-\varepsilon^2 f'' + f^3 - f = 0$.
+It should be possible to show that this is a stable solution,
+and that $f \equiv 0$ is an unstable solution.
+What are the steady states when the domain is bounded?
+
+For $\Omega = [0,L]$, every steady-state solution satisfies
+the equation:
+\begin{equation}
+\label{eq:steady}
+\left\{ \begin{array}{ll}
+0 = -\varepsilon^2 u''''(x) + (u^3(x) - u(x))''  &  x \in [0,L] \\
+0 = u'(x) = u'''(x)  &  x \in \{0,L\}
+\end{array} \right. \end{equation}
+If one sets the values $u(0)$, $u(L)$, $u''(0)$ and $u''(L)$,
+does this determine a unique solution?
+Does every choice of the above values yield a solution?
+
+Consider the equation as in Equation \ref{eq:steady},
+but let the domain be $\Omega = [0,+\infty)$, and boundary conditions:
+\begin{equation}
+u(0) = A, \ \ u'(0) = 0, \ \ u''(0) = B, \ \ u'''(0) = 0
+\end{equation}
+Under which conditions can the solution explode?
+What is the relation between the solution of this problem
+and the solutions of Equation \ref{eq:steady}?
+How should this equation be solved numerically?
+
+For numerical observations on the stability of very narrow domains,
+see Section \ref{sec:narrow}.
+
+\subsection{Scaling of $\varepsilon$}
+
+Let $u^\ast(x,t)$ be the solution of Equation \ref{eq:ch}, and consider an equation:
+\begin{equation}\label{eq:ch:lambda} \left\{ \begin{array}{ll}
+u_t = \Delta(-(\lambda\varepsilon)^2 \Delta u + u^3 - u),
+  & u : \Omega \times [0, \infty) \to \mathbb{R},\ \varepsilon > 0 \\
+\frac{\partial u}{\partial n} = \frac{\partial \Delta u}{\partial n} = 0,
+  & x \in \partial\Omega \\
+u(x,0) = u_{0\lambda}(x),
+  & x \in \Omega
+\end{array} \right. \end{equation}
+Furthermore, let $u_{0\lambda}(x) = u_0(\lambda x)$.
+Then the solution of Equation \ref{eq:ch:lambda} is:
+\begin{equation}
+u^\ast_\lambda(x,t) = u^\ast(\lambda x, \lambda^2 t)
+\end{equation}
+
+\section{Solving the C-H equation numerically}
+
+\subsection{Solving the equation using DCT}
+I chose a scheme proposed by Vollmayr-Lee et al.~\cite{vollmayr03}
+(here $\tilde{u}$ is the value from the previous time step):
+\begin{eqnarray}
+u & + & (1-a_1)\tau\Delta u
++(1-a_2)\varepsilon^2\tau\Delta^2 u
+ -  (1-a_3) \tau \Delta (\tilde{u}^m u^{3-m}) \nonumber \\
+& = & \tilde{u} - a_1 \tau\Delta \tilde{u} - a_2\varepsilon^2\tau\Delta^2 \tilde{u} + a_3\tau\Delta \tilde{u}^3
+\end{eqnarray}
+I set $a_2 = 0$, $a_3 = 1$ and $a_1 = a$.  The initial equation simplifies to:
+\begin{eqnarray}
+\label{eq:predct}
+u + (1-a)\tau\Delta u +\varepsilon^2\tau\Delta^2 u
+& = & \tilde{u} - a \tau\Delta \tilde{u} + \tau\Delta \tilde{u}^3
+\end{eqnarray}
+
+Due to the Neumann boundary conditions, it is possible
+to solve the equation numerically using the Discrete Cosine Transform~\cite{nr}.
+I use $N$ point lattice in 1D, and $N\times N$ point lattice in 2D.
+% The DCT of $\nabla^2$ in 1D and 2D is, respectively:\footnote{I haven't really proved it yet, myself.}
+% \begin{eqnarray}
+% (\widehat{\Delta u})_l & = & \frac{1}{\xi^2} (2\cos\frac{\pi l}{N}-2)\widehat{u}_l \\
+% (\widehat{\Delta u})_{lm} & = & \frac{1}{\xi^2} (2\cos\frac{\pi l}{N}+2\cos\frac{\pi m}{N} - 4)\widehat{u}_{lm}
+% \end{eqnarray}
+%
+Applying DCT to the both sides of Equation~\ref{eq:predct} gives:
+\begin{equation}
+\label{eq:dct}
+\widehat{u}
++ (1-a)\frac{\tau}{\xi^2} L \widehat{u}
++ \frac{\varepsilon^2\tau}{\xi^4} L^2 \widehat{u}
+= \widehat{\tilde{u}}
++ \frac{\tau}{\xi^2} L \widehat{\tilde{u}^3}
+- a \frac{\tau}{\xi^2} L \widehat{\tilde{u}}
+\end{equation}
+where $L$ denotes an unscaled Laplacian operator in the transformed space
+(for details, see Appendix \ref{sec:dct}, Equations \ref{eq:L:1D}, \ref{eq:L:2D}):
+\begin{eqnarray}
+L(n) & = &  2\cos\frac{\pi n}{N}-2 \\
+L(m,n) & = &  2\cos\frac{\pi m}{N}+2\cos\frac{\pi n}{N} - 4
+\end{eqnarray}
+Let's define:
+\begin{equation}\lambda_1 = \frac{\tau}{\xi^2},\quad \lambda_2 = \frac{\varepsilon^2\tau}{\xi^4}
+ = \frac{\varepsilon^2}{\xi^2}\lambda_1\end{equation}
+\begin{equation}C = 1 + (1-a)\lambda_1 L + \lambda_2 L^2\end{equation}
+Then Equation~\ref{eq:dct} can be rewritten as:
+\begin{equation}\widehat{u} = \frac{\widehat{\tilde{u}} + \lambda_1 L (\widehat{\tilde{u}^3} - a \widehat{\tilde{u}})}{C}\end{equation}
+
+Setting $a = 3$ should provide a stable scheme~\cite{vollmayr03}.
+%I'm not 100\% sure whether this is independent of $\varepsilon$
+%(the original scheme assumed $\varepsilon^2 = 1$).
+
+The DCT implementation's time complexity is $O(N \log N)$ in 1D, and $O(N^2 \log N)$ in 2D.
+The computations are dominated by DCT and its inverse.
+The ``classic'' finite-difference method would have time complexity $O(N^2)$ and $O(N^4)$, respectively,
+due to multiplication of a matrix,
+of size $N\times N$ or $N^2\times N^2$ (analogous to the function $\frac{1}{C}$),
+by a vector.
+
+
+
+\subsection{Solving non-convex 2D domain cases using FEM}
+
+The cases where the domain is more complex
+are computed using finite element method.
+The weak formulation of the problem is derived as follows:
+
+\begin{equation} \left\{ \begin{array}{ll}
+u_t & = \Delta w \\
+w & = -\varepsilon^2 \Delta u + u^3 - u
+\end{array} \right. \end{equation}
+
+\begin{equation} \left\{ \begin{array}{ll}
+\int_\Omega u_t \varphi - \int_\Omega \Delta w \varphi & = 0 \\
+\int_\Omega w \psi + \varepsilon^2 \int_\Omega \Delta u \psi - \int_\Omega(u^3 - u) \psi & = 0
+\end{array} \right. \end{equation}
+
+\begin{equation} \left\{ \begin{array}{ll}
+\int_\Omega u_t \varphi - \int_{\partial\Omega} (\nabla u \cdot \vec{n})\varphi + \int_\Omega \nabla w \nabla \varphi & = 0 \\
+\int_\Omega w \psi + \varepsilon^2 \int_{\partial\Omega}(\nabla u \cdot \vec{n})\psi - \varepsilon^2 \int_\Omega \nabla u \nabla \psi - \int_\Omega(u^3 - u) \psi & = 0
+\end{array} \right. \end{equation}
+
+Boundary conditions imply that
+$\nabla u \cdot \vec{n} = \frac{\partial u}{\partial \vec{n}} = 0$
+and 
+$\nabla w \cdot \vec{n} = \frac{\partial w}{\partial \vec{n}} = 0$
+on $\partial\Omega$.
+Therefore:
+
+\begin{equation} \left\{ \begin{array}{ll}
+\int_\Omega u_t \varphi + \int_\Omega \nabla w \nabla \varphi & = 0 \\
+\int_\Omega w \psi - \varepsilon^2 \int_\Omega \nabla u \nabla \psi - \int_\Omega(u^3 - u) \psi & = 0
+\end{array} \right. \end{equation}
+
+Time discretization is done as in FDM case, by substituting $u$ with $a \tilde{u} + (1-a) u$
+(where $\tilde{u}$ is the value from the previous time step):
+\begin{equation} \left\{ \begin{array}{ll}
+\int_\Omega \frac{u - \tilde{u}}{\tau} \varphi + \int_\Omega \nabla w \nabla \varphi & = 0 \\
+\int_\Omega w \psi - \varepsilon^2 \int_\Omega \nabla u \nabla \psi - \int_\Omega(\tilde{u}^3 - a \tilde{u} - (1-a)u) \psi & = 0
+\end{array} \right. \end{equation}
+
+
+
+
+\subsection{Dealing with numerical artifacts}
+
+Given the function $u$, it is interesting to calculate (for plotting, for example) some
+functions depending on $u$.
+Na\"ive calculation of some functions, such as:
+\begin{itemize}
+\item $\Delta(-\varepsilon^2 \Delta u + u^3 - u)$,
+\item $-\varepsilon^2 \Delta u + u^3 - u$,
+\item $-\varepsilon^2 {\partial \Delta u \over \partial {x}},
++ 3u^2{\partial u \over \partial {x}} - {\partial u \over \partial {x}}$ in 1D
+\end{itemize}
+produces numerical artifacts.
+I think it is due to the fact that the equation is not solved by a fully implicit method.
+In a way, the true function $u$ is represented by the pair: $u$ and $\tilde{u}$,
+rather than by any of them.
+
+The first two functions can be better approximated by:
+\begin{itemize}
+\item $\Delta \Big( -\varepsilon^2 \Delta u + \tilde{u}^3 - a \tilde{u} - (1-a)u \Big)$
+\item $-\varepsilon^2 \Delta u + \tilde{u}^3 - a \tilde{u} - (1-a)u$
+\end{itemize}
+
+The third function is is more difficult, since an additional problem arises:
+${\partial u \over \partial {x}}$ and ${\partial \Delta u \over \partial {x}}$
+are centered at $x_i + \frac{\xi}{2}$, while $u$ is centered at $x$.
+Centering the gradients at $x_i$ by approximating them with $\frac{v_{i+1} - v_{i-1}}{2 \xi}$
+introduces artifacts too (probably because $u$ is steep, but $\nabla u$ is not constant).
+
+Therefore, the idea is to use one of the following formulae (assuming domain $\Omega = [c, d]$):
+\begin{itemize}
+\item $\int_c^x \Big( -\varepsilon^2 \Delta^2 u + \Delta(\tilde{u}^3 - a \tilde{u} - (1-a)u) \Big)$
+(centered at $x_i$)
+\item $-\varepsilon^2 {\partial \Delta u \over \partial {x}}
++ {\partial \tilde{u}^3 \over \partial {x}}
+- a {\partial \tilde{u} \over \partial {x}}
+- (1-a) {\partial u \over \partial {x}}$
+(centered at $x_i + \frac{\xi}{2}$)
+\end{itemize}
+which don't produce any visible artifacts and give similar shapes, but the values
+are slightly scaled (by a factor of $2$, at most).
+The $\int_c^x$ version gives the correct value at the right end
+of the domain (and the same as the other version), so this is probably not a problem of summation.
+I don't know which version is closer to the true value.
+
+Currently, I don't know how to calculate: ${\Delta(-\varepsilon^2 \Delta u + u^3 - u) \over |\nabla u|}$.
+Considering the previous experiences, I'm not sure if centering the gradient at $x_i$ is a good idea.
+
+\subsection{Implementation}
+The DCT version (both 1D and 2D) is implemented using MATLAB,
+the FEM version is implemented using freeFEM++.
+The implementation was done without good understanding of the methods.
+The main purpose was to learn how the solutions of the equation might look like.
+
+\subsection{Validation}
+I have a fast, stable, mass-conserving FDM implementation in 1D and 2D,
+using Vollmayr-Lee et. al. scheme~\cite{vollmayr03} and solving using DCT.
+I can ``play with it'' and learn how the 1D solutions behave.
+I could also try to reproduce the results from the literature.
+Then I could move to 2D.  One possible
+validation of 2D is to set $u_0(x,y) = u_0(x)$, that is, constant
+along the second dimension, and check if the solutions are constant along
+the second dimension over time.  Next, I could calibrate FEM implementation
+so that it would reproduce the results of 2D FDM.
+Finally, I could move to non-convex domains (the true benefit of FEM).
+
+
+
+
+
+
+\section{Properties of the solutions}
+
+\subsection{Mass transfer}
+
+Equation \ref{eq:mass} states that mass, understood as $\int_\Omega u$ is constant in time.
+Therefore, any change of mass in one part of the domain must be instantaneously countered
+by a change in some other part.
+I've started investigating the ``mass transfer'' in 1D, and in the future I'd like to
+understand the process in 2D too.
+
+In 1D, let $\Omega = [a,b]$, and consider
+two ``islands'' of $1$ on two opposite ends of the domain,
+and ``sea'' of $-1$ between them.
+The smaller island will gradually disappear, and the larger island will {\it instantaneously}
+gain the mass lost by the smaller one (total mass is conserved).
+The larger the ``sea'', the longer the process will take.
+
+The ``information'' about mass change is ``transmitted'' by
+$\frac{\partial \Delta u}{\partial \vec{n}}$
+and $\frac{\partial u}{\partial \vec{n}}$.
+For $\Omega = [a,b]$, from Equation \ref{eq:mass} it follows that the function:
+\begin{equation}
+M(x) = -\varepsilon^2 {\partial \Delta u \over \partial {x}}
++ (3u^2 - 1){\partial u \over \partial {x}}
+\end{equation}
+gives the ``mass flux'', or the rate of change of mass in the subdomain $[a,x]$.
+
+It could be interesting to control the mass transfer somehow.
+The transfer could be controlled by setting an artificial
+boundary at the point where $\frac{\partial u}{\partial x} = 0$
+and setting appropriate BC for $\frac{\partial \Delta u}{\partial x}$.
+Please note that the point where $\frac{\partial u}{\partial x} = 0$
+is moving in time.
+
+In 2D, it might be interesting to look closer at the curves given by
+$u(x) = \pm {\sqrt{3} \over 3}$, since by taking this level set,
+the mass flux simplifies to $-\varepsilon^2 {\partial \Delta u \over \partial \vec{n}}$.
+
+
+\subsection{Interface motion}
+
+After the initial stage, when domains are already formed,
+the shape and motion of interfaces between the domains plays
+a major role.
+
+The interface speed can be defined as a speed at which a curve (in 2D case) defined by $x : u(x) = 0$ moves
+in the direction of $\nabla u$.  This translates to:
+\begin{equation}
+v = \frac{{\partial u \over \partial t}}{{\partial u \over \partial \vec{g}}}|_{\vec{g} = \frac{\nabla u}{|\nabla u|}}
+  = {\Delta(-\varepsilon^2 \Delta u + u^3 - u) \over \nabla u \cdot \frac{\nabla u}{|\nabla u|}}
+  = {\Delta(-\varepsilon^2 \Delta u + u^3 - u) \over |\nabla u|}
+\end{equation}
+
+In 2D, how does the evolution of the interface curves look like?
+
+In 1D, the speed of points $x$ for which $u(x) = 0$ seems to be inversely
+proportional to the distances to other such points.
+
+
+\subsection{Narrow domains}
+\label{sec:narrow}
+
+In 1D, when the domain is wide enough, a function similar in shape
+to $\tanh {x-x_0\over\varepsilon\sqrt{2}}$ is a stable steady state,
+and $f \equiv 0$ is an unstable steady state.
+
+However, for sufficiently narrow domains, $f \equiv 0$ seems to
+be the only steady state of the system (and it is stable).
+The threshold width $w^\ast$ seems to be somewhere in the range
+$2\varepsilon \leq w^\ast \leq 4\varepsilon$.
+This property is extremely interesting in the context of building
+complex, network-like domains in 2D: it may turn out that phase separation
+will not occur in sufficiently narrow and curved channels!
+
+
+%  \section{Solving 1D case using FDM}
+%  %
+%  In order to understand the behaviour of the Cahn-Hilliard equation,
+%  a one-dimensional case is investigated first.
+%  
+%  The 1D case is solved numerically using finite differences method.
+%  More specifically, a scheme proposed by de~Mello~et~al.~\cite{deMello05}
+%  is implemented.
+%  
+%  $$\varepsilon^2 = 0.0001,\ dx = 0.01,\ dt = 0.0001,\ \Omega = [0, 1]$$
+%  $$x_1 = 0,\ x_2 = dx,\ \dots,\ x_n = 1$$
+%  $$\frac{u_i^{n+1}-u_i^n}{dt} =
+%    -\varepsilon^2\Delta^2 u_i^{n+1}
+%    + \Delta (u_i^n)^2u_i^{n+1}
+%    - \Delta u_i^n$$
+%  
+%  % $$u_i^{n+1}
+%  %   + dt \varepsilon^2 \Delta^2 u_i^{n+1}
+%  %   - dt \Delta (u_i^n)^2u_i^{n+1}
+%  %   =  u_i^n - dt \Delta u_i^n$$
+%  
+%  \begin{eqnarray*} u_i^{n+1} & + & \frac{dt \varepsilon^2}{dx^4}(
+%        u_{i-2}^{n+1} - 4u_{i-1}^{n+1}
+%        + 6 u_i^{n+1} - 4u_{i+1}^{n+1} + u_{i+2}^{n+1}) \nonumber \\
+%    & - & \frac{dt}{dx^2}((u_{i-1}^n)^2u_{i-1}^{n+1}
+%        - 2(u_i^n)^2 u_i^{n+1} + (u_{i+1}^n)^2 u_{i+1}^{n+1}) \nonumber \\
+%    & = & u_i^n - \frac{dt}{dx^2}(u_{i-1}^n - 2u_i^n + u_{i+1}^n)
+%  \end{eqnarray*}
+%  
+%  The boundary conditions are reflected by:
+%  $$ u_0 = u_2,\ u_{-1} = u_3,\ u_{n+1} = u_{n-1},\ u_{n+2} = u_{n-2}$$
+%  
+%  In order to test the implementation,
+%  numerical results by Furihata~\cite{furihata01} were taken as a reference.
+%  The general behaviour was successfully reproduced,
+%  although transitions occured at different timesteps,
+%  and mass was not conserved.
+
+
+
+\section{Current questions and problems}
+\begin{itemize}
+%  \item The time step in FDM was much too large, Rogers et al.~\cite{rogers88} suggest
+%  $\Delta t \sim (\Delta x)^4$.  As far as I understand, this was suggested
+%  for 2D lattice, but probably holds true for 1D too.
+%  \item Papers propose various methods of dealing with the nonlinearity of $u^3 - u$:
+%  \begin{itemize}
+%  \item[$\clubsuit$] De Mello et al.~\cite{deMello05} propose: $u_{n+1} u_n^2 - u_n$.
+%  \item[$\clubsuit$] Furihata~\cite{furihata01} proposes: ${(u_{n+1}^3 + u_{n+1}^2 u_n + u_{n+1} u_n^2 + u_n^3)\over 4} + {u_{n+1}+u_n \over 2}$.
+%  \item[$\clubsuit$] Vollmayr et~al.~\cite{vollmayr03} propose:
+%  $-(1-a_1)u_{n+1} - a_1 u_n + (1-a_3)u_{n+1}^{3-m} u_n^m + a_3u_n^3$
+%  and show which $a_1$, $a_3$ and $m$ yield an unconditionally stable scheme.
+%  \end{itemize}
+\item I don't understand Eyre's theorem about {\it convexity splitting}~\cite{eyre98},
+which is crucial for the scheme of Vollmayr-Lee et~at.~\cite{vollmayr03}.
+Bertozzi et al.~\cite{bertozziXX} uses the scheme by Vollmayr-Lee et al. as well.
+
+\item I need to find reasonable $\Delta x$ and $\Delta t$ for computations using the DCT.
+
+% \item I'd like to apply the Vollmayr-Lee et~at.~\cite{vollmayr03}
+% approach to the time discretization in FEM implementation.
+
+\item Aggregation of two rounded islands into a larger object
+is a common phenomenon in 2D.  I don't understand the ``mechanics''
+or ``driving force'' of it.  For this reason I decided to implement
+the 1D case and examine the aggregation process in a simpler case first.
+
+\item In 1D, after the initial stage, it seems that the the state
+of the system might be {\it almost completely} described by the values
+$x_i$, $u'(x_i)$, $u''(x_i)$,
+$u^{(3)}(x_i)$, $u^{(4)}(x_i)$ at the points where $u(x_i) = 0$.
+I'd like to verify that.
+Also, this idea needs a more precise formulation.
+
+%  \item I would like to learn how to solve the Cahn-Hilliard equation
+%  using Discrete Cosine Transform~\cite{nr}.
+%  Also, I'd like to see if the Fourier transform, or DCT of $u$
+%  contain any valuable information about the state of the system.
+%  A MATLAB code downloaded from Eyre's website solves the C-H equation
+%  using DCT.  I don't understand some details of the implementation.
+
+\item I'd like to see the solutions of the 1D equation
+\begin{equation}
+0 = -\varepsilon^2 u''''(x) + (u^3)''(x) - u''(x)
+\end{equation}
+on $\Omega = [0,\infty)$ with boundary conditions
+$u(0) = A$, $u'(0) = 0$, $u''(0) = B$, $u'''(0) = 0$.
+I'd like to check how these solutions depend on $A$ and $B$.
+
+\item It would be plausible to have an adaptive time discretization,
+which would skim over the long periods when ``nothing happens''
+and concentrate on the periods when transitions occur.
+In order to do this, I would first have to understand what happens
+when ``nothing happens'', and that's another reason to look carefully
+at 1D solutions.  I'd also need a way to forecast the ``idle'' periods.
+
+%The ``idle'' periods can be naturally defined as:
+%$$\sup_\Omega |\Delta(-\varepsilon^2 \Delta u + u^3 - u))| < \delta$$
+%but maybe there is a better criterion.
+
+\item I'd like to see if the Fourier transform, or DCT of $u$
+contain any valuable information about the state of the system.
+
+
+\item I'd like to learn the stability analysis of stationary solutions
+of evolution equations, and apply it to the analytic solution in 1D
+(see Section \ref{sec:stationary}).  I'll try to learn it from \cite{cazenave}.
+
+\item In 1D (and probably also in the higher dimensions),
+in the later stages of development of the system,
+the domain interfaces are locally ``similar'' to $\tanh{{x-x_0} \over \sqrt{2 \varepsilon^2}}$.
+For instance, $u(x_0) = 0$ usually entails $u_x(x_0) = {1 \over \sqrt{2 \varepsilon^2}}$.
+I don't know how to define this ``similarity'' precisely, and I have no idea how to convert
+this observation into a theorem.
+
+
+\item I cannot derive the fact that C-H process
+is a gradient flow in the potential
+$E(u) = \int_\Omega {1\over 2}\varepsilon^2 |\nabla u|^2 + {1\over 4}(u^2 - 1)^2$.
+% All I can do is derive:
+% $$E'(u)\varphi = \int_\Omega \Big(
+% -\varepsilon^2 \Delta u + (u^3 - u) \Big)\varphi,
+% \ \forall \varphi \in C^2(\Omega)$$
+% which might be unrelated.
+The derivation can be found, for instance, in \cite{fife00},
+I just need to understand it.
+% and I suspect that later I could use the equation:
+% $$u_t + \nabla \cdot \mathbf{F}(u) = 0$$
+% (see Chapter 11 of \cite{evans98:ams}).
+% My problem probably has something to do with the
+% fact that the gradient flow is in the $H^{-1}$ norm,
+% which I don't know.
+\end{itemize}
+
+
+
+\appendix
+
+\section{Discrete Cosine Transform} \label{sec:dct}
+
+There is a number of ways in which Discrete Cosine Transform
+can be defined.
+Therefore, for the sake of clarity, I define the DCT and prove
+some necessary properties.
+The definition is, up to indices, equivalent to the DCT function
+of MATLAB.  The 2D version is, up to indices, equivalent
+to the DCT2 function of MATLAB.
+
+\subsection{DCT in 1D}
+
+A sequence $\{f_n\}_{n=0,\dots,N-1}$, where $f_n \in \mathbb{R}$,
+has a DCT $\{F_k\}_{k=0,\dots,N-1}$ defined as:
+\begin{equation}
+F_k := \mathscr{C}[f](k) := w(k)\sum_{n=0}^{N-1} f_n \cos{\pi(n+\frac{1}{2})k \over N}
+\end{equation}
+where
+\begin{equation}
+\label{eq:def:w}
+w(k) := \left\{ \begin{array}{ll}
+\sqrt{1 \over N} & k = 0 \\
+\sqrt{2 \over N} & k \neq 0
+\end{array} \right.  
+\end{equation}
+
+The inverse transform is given by:
+$$f_n := \mathscr{C}^{-1}[F](k) := {\sum_{k=0}^{N-1}} w(k) F_k \cos{\pi(n+\frac{1}{2})k \over N}$$
+
+Indeed, $\mathscr{C}[\mathscr{C}^{-1}[F]] = F$ and $\mathscr{C}^{-1}[\mathscr{C}[f]] = f$:
+\begin{eqnarray}
+\mathscr{C}^{-1}[\mathscr{C}[f]](m) & = & {\sum_{k=0}^{N-1}} w(k)
+\Big( w(k)\sum_{n=0}^{N-1} f_n \cos{\pi(n+\frac{1}{2})k \over N} \Big)
+\cos{\pi(m+\frac{1}{2})k \over N} \nonumber \\
+%
+& = & \sum_{n=0}^{N-1} f_n \sum_{k=0}^{N-1}
+\Big( w(k) \cos{\pi(n+\frac{1}{2})k \over N} \Big)
+\Big( w(k) \cos{\pi(m+\frac{1}{2})k \over N} \Big) \nonumber \\
+%
+& = & \dots = \sum_{n=0}^{N-1} f_n \delta_{nm} = f_m \\
+%
+%
+\mathscr{C}[\mathscr{C}^{-1}[F]](l) & = &
+w(l)\sum_{n=0}^{N-1}
+\sum_{k=0}^{N-1} w(k) F_k \cos{\pi(n+\frac{1}{2})k \over N}
+\cos{\pi(n+\frac{1}{2})l \over N} \nonumber \\
+%
+& = & \sum_{k=0}^{N-1} F_k \sum_{n=0}^{N-1}
+\Big( w(k) \cos{\pi(n+\frac{1}{2})k \over N} \Big)
+\Big( w(l) \cos{\pi(n+\frac{1}{2})l \over N} \Big) \nonumber \\
+%
+& = & \ldots = \sum_{k=0}^{N-1} F_k \delta_{kl} = F_l
+\end{eqnarray}
+
+It is clear that both $\mathscr{C}$ and $\mathscr{C}^{-1}$ are linear.
+Sometimes $\mathscr{C}[f]$ is written as $\widehat{f}$.
+Assuming Neumann boundary conditions: $u_{-1} := u_{0}$ and $u_{N} := u_{N-1}$,
+the cosine transform of Laplacian is:
+\begin{eqnarray}
+(\widehat{\Delta u})_k
+& = & w(k)\sum_{n=0}^{N-1} (\Delta u)_n \cos{\pi(n+\frac{1}{2})k \over N} \nonumber \\
+& = & w(k)\sum_{n=0}^{N-1} \frac{u_{n-1} - 2u_n + u_{n+1}}{\xi^2} \cos{\pi(n+\frac{1}{2})k \over N} \nonumber \\
+& = & \frac{1}{\xi^2}\Big( w(k)\sum_{n=-1}^{N-2} u_{n} \cos{\pi(n+\frac{3}{2})k \over N}
+- 2 \widehat{u}_k
++ w(k)\sum_{n=1}^{N} u_{n} \cos{\pi(n-\frac{1}{2})k \over N}\Big) \nonumber \\
+%
+& = & \frac{1}{\xi^2}\Big( w(k)\sum_{n=0}^{N-1} u_{n} \cos{\pi(n+\frac{3}{2})k \over N}
++ w(k) u_{-1} \cos{\pi(+\frac{1}{2})k \over N} - w(k) u_{N-1} \cos{\pi(N+\frac{1}{2})k \over N} \nonumber \\
+& - & 2 \widehat{u}_k
++ w(k)\sum_{n=0}^{N-1} u_{n} \cos{\pi(n-\frac{1}{2})k \over N}
++ w(k) u_N \cos{\pi(N-\frac{1}{2})k \over N} - w(k) u_0 \cos{\pi(-\frac{1}{2})k \over N} \Big) \nonumber \\
+%
+& = & \frac{1}{\xi^2}\Big( w(k)\sum_{n=0}^{N-1} u_{n} \cos{\pi(n+\frac{3}{2})k \over N}
+- 2 \widehat{u}_k
++ w(k)\sum_{n=0}^{N-1} u_{n} \cos{\pi(n-\frac{1}{2})k \over N} \nonumber \\
+& + &  w(k) \cos{\pi\frac{1}{2}k \over N}(u_{-1} - u_0 + u_N - u_{N-1}) \Big) \nonumber \\
+%
+& = & \frac{1}{\xi^2}\Big( w(k)\sum_{n=0}^{N-1} u_{n} (\cos{\pi (n+\frac{1}{2}) k \over N} \cos{\pi k \over N} - \sin{\pi (n+\frac{1}{2}) k \over N} \sin{\pi k \over N})
+- 2 \widehat{u}_k \nonumber \\
+& + & w(k)\sum_{n=0}^{N-1} u_{n} (\cos{\pi (n+\frac{1}{2}) k \over N} \cos{\pi k \over N} + \sin{\pi (n+\frac{1}{2}) k \over N} \sin{\pi k \over N}) \Big)
+\nonumber \\
+& = & \frac{1}{\xi^2}\Big( 2 \cos{\pi k \over N} w(k)\sum_{n=0}^{N-1} u_{n} \cos{\pi (n+\frac{1}{2}) k \over N} - 2 \widehat{u}_k \Big) \nonumber \\
+& = & \frac{1}{\xi^2} (2 \cos{\pi k \over N} - 2) \widehat{u}_k
+\end{eqnarray}
+
+Let's define function $L(k)$ representing an unscaled Laplacian in the transformed space:
+\begin{equation}
+\label{eq:L:1D}
+L(k) := 2 \cos{\pi k \over N} - 2
+\end{equation}
+
+\subsection{DCT in 2D}
+The two-dimensional DCT of a matrix $(f_{mn})_{m=0,\dots,M-1;n=0,\dots,N-1}$,
+where $f_{mn} \in \mathbb{R}$,
+is a matrix $(F_{kl})_{k=0,\dots,M-1;l=0,\dots,N-1}$ defined as:
+\begin{equation}
+F_{kl} := \mathscr{C}[f](k,l) := w(k)w(l)
+\sum_{m=0}^{M-1} \sum_{n=0}^{N-1}
+f_{mn} \cos{\pi(m+\frac{1}{2})k \over M} \cos{\pi(n+\frac{1}{2})l \over N}
+\end{equation}
+where $w$ is defined as in Equation \ref{eq:def:w}.
+For now, the following facts about the 2D DCT are left without proof.
+
+The result of DCT in two dimensions is equal to the result of DCT in the first dimension
+applied to the DCT in the second dimension, and the order of application is irrelevant:
+\begin{eqnarray}
+\mathscr{C}_{xy}[f] := \mathscr{C}_x[\mathscr{C}_y[f]] &=& \mathscr{C}_y[\mathscr{C}_x[f]]
+\end{eqnarray}
+The 2D version of Equation \ref{eq:L:1D} is:
+\begin{eqnarray}
+\label{eq:L:2D}
+\mathscr{C}_{xy}[\Delta f](k,l) &=& (2 \cos{\pi k \over N} + 2 \cos{\pi l \over N} - 4) \mathscr{C}_{xy}[f](k,l)
+\end{eqnarray}
+
+
+\nocite{bertozziXX}
+\nocite{vollmayr03}
+\nocite{deMello05}
+\nocite{eyre98}
+\nocite{nr}
+\nocite{cazenave}
+
+\nocite{wei98}
+\nocite{rogers88}
+\nocite{guillot04}
+\nocite{guillot02}
+\nocite{bloemker01}
+\nocite{bates00}
+% \nocite{sial03}
+
+\nocite{grant93}
+\nocite{fife00}
+
+\bibliography{cahn-hilliard}
+
+
+\end{document}
